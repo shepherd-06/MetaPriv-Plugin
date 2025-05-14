@@ -28,6 +28,19 @@
             right: 10px;
             font-size: 0.75rem;
         }
+
+        #syncBtn {
+            position: absolute;
+            bottom: 10px;
+            border-radius: 0.5rem;
+            width: 300px;
+        }
+
+        #syncSpinner {
+            display: none;
+            font-size: 0.8rem;
+        }
+
     </style>
 </head>
 
@@ -46,7 +59,9 @@
         <p class="mb-1">✅ Logged in as <strong id="displayUsername"></strong></p>
         <p class="mb-1">Active Pages:</p>
         <ul id="pageList" class="list-group mb-1"></ul>
-        <button id="syncBtn" class="btn btn-sm btn-outline-primary w-100">Sync Again</button>
+        <button id="syncBtn" class="btn btn-sm btn-outline-primary w-100">
+            <span id="syncBtnText">Sync Again</span>
+            <span id="syncSpinner" class="spinner-border spinner-border-sm ms-2" role="status" aria-hidden="true"></span> </button>
     </div>
 
     <script src="popup.js"></script>

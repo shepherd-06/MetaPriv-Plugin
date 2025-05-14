@@ -81,13 +81,24 @@ document.addEventListener('DOMContentLoaded', async () => {
     });
 
     syncBtn.addEventListener('click', async () => {
-        const { user } = await getFromStorage(['user']);
-        if (!user) return;
+        const syncBtn = document.getElementById('syncBtn');
+        const syncBtnText = document.getElementById('syncBtnText');
+        const syncSpinner = document.getElementById('syncSpinner');
 
-        const page_urls = await fetchActivePages(user.sessionToken);
-        await setToStorage({ page_urls });
-        showUserInfo(user, page_urls);
+        syncSpinner.style.display = 'inline-block';
+        syncBtn.disabled = true;
+
+        const { user } = await getFromStorage(['user']);
+        if (user) {
+            const page_urls = await fetchActivePages(user.sessionToken);
+            await setToStorage({ page_urls });
+            showUserInfo(user, page_urls);
+        }
+
+        syncSpinner.style.display = 'none';
+        syncBtn.disabled = false;
     });
+
 });
 
 // ─────────────────────────────────────────────

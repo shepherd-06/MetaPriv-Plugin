@@ -1,23 +1,8 @@
 // ─────────────────────────────────────────────
-// Async-friendly chrome.storage helpers
+// Async-friendly storage helpers
 // ─────────────────────────────────────────────
-function getFromStorage(keys) {
-    return new Promise((resolve) => {
-        browser.storage.local.get(keys, (result) => resolve(result));
-    });
-}
+import { getFromStorage, setToStorage, removeFromStorage } from './utils/storage.js';
 
-function setToStorage(data) {
-    return new Promise((resolve) => {
-        browser.storage.local.set(data, () => resolve());
-    });
-}
-
-function removeFromStorage(keys) {
-    return new Promise((resolve) => {
-        browser.storage.local.remove(keys, () => resolve());
-    });
-}
 
 // ─────────────────────────────────────────────
 // DOM is ready

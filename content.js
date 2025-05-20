@@ -6,9 +6,17 @@
     // Normalize URLs: strip query parameters
     const cleanedUrls = page_urls.map(u => u.split('?')[0]);
 
+    // Map: cleaned_url -> original_url
+    const urlMap = {};
+    page_urls.forEach(u => {
+        const cleaned = u.split('?')[0];
+        urlMap[cleaned] = u; // store the original URL
+    });
+
+    // Stats to batch-send
+    const removalStats = {};
+
     console.log("MetaPriv Plugin: Watching for posts from", cleanedUrls.length, "pages");
-    console.log("potato chips");
-    console.log(cleanedUrls);
 
     // Set to track deleted page names (just for logging)
     const deletedPagesSet = [];
@@ -30,25 +38,11 @@
                 console.log(`Deleting watched page post from: ${pageName} (${pageURL})`);
                 postDiv.remove();
 
-                const now = new Date().toISOString();
-
-                // Initialize if new
-                if (!deletedPages[pageName]) {
-                    deletedPages[pageName] = {
-                        numberOfTimes: 1,
-                        when: [now],
-                        url: pageURL
-                    };
-                } else {
-                    deletedPages[pageName].numberOfTimes += 1;
-                    deletedPages[pageName].when.push(now);
+                const originalURL = urlMap[pageURL];
+                if (originalURL) {
+                    if (!removalStats[originalURL]) removalStats[originalURL] = { count: 0 };
+                    removalStats[originalURL].count += 1;
                 }
-
-                // Save updated record
-                await setToStorage({ deletedPages });
-
-                deletedPagesSet.push(pageName);
-                console.log("Deleted pages so far:", Array.from(deletedPagesSet));
             }
         }
     }
@@ -80,6 +74,51 @@
 
         observer.observe(mainFeed, { childList: true, subtree: true });
         console.log("Observer is now active on the Facebook main feed.");
+
+        setInterval(async () => {
+            if (Object.keys(removalStats).length === 0) return;
+
+            const { user } = await getFromStorage(['user']);
+            if (!user || !user.sessionToken) {
+                console.warn("No user session found. Skipping removal sync.");
+                return;
+            }
+
+            const payload = Object.entries(removalStats).map(([url, { count }]) => ({
+                [url]: { count }
+            }));
+
+            try {
+                const res = await fetch('http://127.0.0.1:5000/sync/removed_pages', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${user.sessionToken}`
+                    },
+                    body: JSON.stringify(payload)
+                });
+
+                if (!res.ok) {
+                    const result = await res.json();
+                    console.error("❌ Failed to sync removed pages:", result.msg);
+                    return;
+                };
+
+                const result = await res.json();
+                console.log("✅ Sent removalStats to server:", result);
+
+                // Clear the local stats if successful
+                for (const key in removalStats) {
+                    delete removalStats[key];
+                }
+            } catch (err) {
+                console.error("❌ Failed to sync removed pages:");
+                console.error("Name:", err.name);
+                console.error("Message:", err.message);
+                console.error("Stack:", err.stack);
+                console.error("Full Error Object:", JSON.stringify(err, Object.getOwnPropertyNames(err)));
+            }
+        }, 10000);
     } else {
         console.warn("Main feed container not found on this page.");
     }

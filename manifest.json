@@ -6,7 +6,7 @@
   "icons": {
     "48": "icon.png"
   },
-  "permissions": ["tabs", "storage"],
+  "permissions": ["tabs", "storage", "http://127.0.0.1/"],
   "host_permissions": ["http://127.0.0.1:5000/"],
   "content_scripts": [
     {
